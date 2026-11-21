@@ -455,27 +455,30 @@ export default function LiveScreen({
         {statusLabel(status)} · celular no {netLabel(netType)}
       </Text>
 
-      <View style={styles.captureRow}>
-        <Pressable style={[ui.buttonGhost, {flex: 1}]} disabled={!video} onPress={takePhoto}>
-          <Text style={[ui.text, !video && {opacity: 0.4}]}>📷 Foto</Text>
-        </Pressable>
-        <Pressable style={[ui.buttonGhost, {flex: 1}]} onPress={onOpenRecordings}>
-          <Text style={ui.text}>🎞 Gravações</Text>
-        </Pressable>
-      </View>
+      {/* photo (icon only) · sound · talk — one row */}
       <View style={styles.captureRow}>
         <Pressable
-          style={[ui.buttonGhost, {flex: 1}, listening && {borderColor: colors.primary}]}
+          style={[ui.buttonGhost, styles.photoBtn]}
+          disabled={!video}
+          onPress={takePhoto}
+          accessibilityLabel="Tirar foto">
+          <Text style={[styles.photoIcon, !video && styles.dim]}>📷</Text>
+        </Pressable>
+        <Pressable
+          style={[ui.buttonGhost, styles.flex1, listening && {borderColor: colors.primary}]}
           disabled={!online}
           onPress={toggleSound}>
-          <Text style={[ui.text, !online && {opacity: 0.4}]}>{listening ? '🔊 Som ligado' : '🔇 Som desligado'}</Text>
+          <Text style={[ui.text, !online && styles.dim]} numberOfLines={1}>
+            {listening ? '🔊 Som ligado' : '🔇 Som desligado'}
+          </Text>
         </Pressable>
         <Pressable
-          style={[ui.buttonGhost, {flex: 1}, talking && styles.talkingBtn]}
+          style={[ui.buttonGhost, styles.flex1, talking && styles.talkingBtn]}
           disabled={!online && !talking}
-          onPress={toggleTalk}>
-          <Text style={[ui.text, talking && styles.talkingText, !online && !talking && {opacity: 0.4}]}>
-            {talking ? '🎤 Falando… toque p/ parar' : '🎤 Toque para falar'}
+          onPress={toggleTalk}
+          accessibilityLabel={talking ? 'Parar de falar' : 'Falar pela câmera'}>
+          <Text style={[ui.text, talking && styles.talkingText, !online && !talking && styles.dim]} numberOfLines={1}>
+            {talking ? '⏸ Falando…' : '▶ Falar'}
           </Text>
         </Pressable>
       </View>
@@ -644,6 +647,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
   },
+  photoBtn: {width: 56, paddingHorizontal: 0},
+  photoIcon: {fontSize: 20},
+  flex1: {flex: 1},
+  dim: {opacity: 0.4},
   talkingBtn: {borderColor: colors.danger, backgroundColor: 'rgba(229,83,75,0.15)'},
   talkingText: {color: colors.danger, fontWeight: '700'},
   videoButtons: {position: 'absolute', right: 8, bottom: 8, flexDirection: 'row', gap: 8},
