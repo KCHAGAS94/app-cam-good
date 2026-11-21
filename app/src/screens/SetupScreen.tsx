@@ -62,7 +62,6 @@ export default function SetupScreen({onDone}: Props) {
   const [showWifiPwd, setShowWifiPwd] = useState(false);
   /** Camera's answer to set_wifi: null = waiting, otherwise the parsed reply. */
   const [wifiReply, setWifiReply] = useState<Record<string, any> | null>(null);
-  const [lastRaw, setLastRaw] = useState('');
   const [verified, setVerified] = useState(false);
   const [verifyGaveUp, setVerifyGaveUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +83,6 @@ export default function SetupScreen({onDone}: Props) {
         if (e.did !== connectedDid.current) {
           return;
         }
-        setLastRaw(e.json);
         const reply = parseReply(e.json);
         if (reply?.pro === 'mj_other_login') {
           setError(
@@ -499,11 +497,6 @@ export default function SetupScreen({onDone}: Props) {
           </View>
         )}
 
-        {lastRaw !== '' && (step === 'wifi' || step === 'wifi-sent') && (
-          <Text style={[ui.muted, {fontSize: 11}]} selectable>
-            Detalhes técnicos: {lastRaw.slice(0, 300)}
-          </Text>
-        )}
 
         {step === 'save' && (
           <View style={[ui.card, {gap: 12}]}>

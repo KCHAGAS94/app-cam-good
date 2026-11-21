@@ -30,7 +30,6 @@ export default function SdCardScreen({camera, onBack}: Props) {
   const [rec, setRec] = useState<Record<string, any> | null>(null);
   const [formatting, setFormatting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [lastRaw, setLastRaw] = useState('');
 
   const send = (json: string) => CameraModule.send(did, json);
   const refresh = () => {
@@ -46,9 +45,6 @@ export default function SdCardScreen({camera, onBack}: Props) {
       const r = parseReply(e.json);
       if (!r) {
         return;
-      }
-      if (r.cmd === CMD.GET_SD || r.cmd === CMD.SET_SD || r.cmd === CMD.GET_RECORD_PARAMS || r.cmd === CMD.SET_RECORD_PARAMS) {
-        setLastRaw(e.json);
       }
       if (r.cmd === CMD.GET_SD) {
         setSd({total: Number(r.total ?? 0), free: Number(r.free ?? 0), raw: r});
@@ -153,8 +149,17 @@ export default function SdCardScreen({camera, onBack}: Props) {
                   <View style={[styles.barFill, {width: `${usedPct}%`}]} />
                 </View>
                 <Text style={ui.muted}>
-                  {usedPct}% usado · {size(sd.free)} livres de {size(sd.total)}
+                  {/* isShowCapacity 0 = the camera reports percentages, not MB (vendor app does the same) */}
+                  {Number(sd.raw.isShowCapacity ?? 1) === 0
+                    ? `${usedPct}% usado · ${100 - usedPct}% livre`
+                    : `${usedPct}% usado · ${size(sd.free)} livres de ${size(sd.total)}`}
                 </Text>
+                {usedPct >= 99 && (
+                  <Text style={ui.muted}>
+                    Cartão cheio é normal na gravação contínua: a câmera grava por cima das gravações mais
+                    antigas.
+                  </Text>
+                )}
               </>
             )}
             <Pressable onPress={refresh} hitSlop={8}>
@@ -203,12 +208,6 @@ export default function SdCardScreen({camera, onBack}: Props) {
         )}
 
         {message && <Text style={[ui.text, {textAlign: 'center'}]}>{message}</Text>}
-
-        {lastRaw !== '' && (
-          <Text style={[ui.muted, {fontSize: 11}]} selectable>
-            Detalhes técnicos: {lastRaw.slice(0, 300)}
-          </Text>
-        )}
       </ScrollView>
     </View>
   );

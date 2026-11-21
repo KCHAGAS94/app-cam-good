@@ -26,14 +26,12 @@ export default function CameraWifiScreen({camera, onBack}: Props) {
   const [showPwd, setShowPwd] = useState(false);
   const [sent, setSent] = useState(false);
   const [reply, setReply] = useState<Record<string, any> | null>(null);
-  const [lastRaw, setLastRaw] = useState('');
 
   useEffect(() => {
     const sub = onMessage(e => {
       if (e.did !== did) {
         return;
       }
-      setLastRaw(e.json);
       const r = parseReply(e.json);
       if (r?.cmd === CMD.GET_WIFI) {
         // result < 0 = the camera refused (e.g. session not logged in yet): leave "não informada"
@@ -199,11 +197,6 @@ export default function CameraWifiScreen({camera, onBack}: Props) {
           </View>
         )}
 
-        {lastRaw !== '' && (
-          <Text style={[ui.muted, {fontSize: 11}]} selectable>
-            Detalhes técnicos: {lastRaw.slice(0, 300)}
-          </Text>
-        )}
       </ScrollView>
     </View>
   );
