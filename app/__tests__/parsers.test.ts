@@ -2,7 +2,7 @@
  * Tests for the pure helpers that read camera replies (no native code involved).
  * Reply shapes follow the vendor app (PIX-LINK CAM) for PIXB cameras.
  */
-import {CamCommands, rotmirParse, rotmirValue} from '../src/camera/commands';
+import {CamCommands, PTZ, ptzForScreen, rotmirParse, rotmirValue} from '../src/camera/commands';
 import {
   fileLabel,
   hourKey,
@@ -104,6 +104,22 @@ describe('misc', () => {
     expect(isCloudOnline(60)).toBe(true);
     expect(isCloudOnline(61)).toBe(false);
     expect(isCloudOnline(-1)).toBe(false);
+  });
+
+  test('arrows follow the picture rotation (right arrow always moves the picture right)', () => {
+    // no rotation: same direction
+    expect(ptzForScreen('right', 0)).toEqual({move: PTZ.RIGHT, stop: PTZ.RIGHT_STOP});
+    // picture turned 90° clockwise: camera "up" shows as screen "right"
+    expect(ptzForScreen('right', 90).move).toBe(PTZ.UP);
+    expect(ptzForScreen('down', 90).move).toBe(PTZ.RIGHT);
+    expect(ptzForScreen('left', 90).move).toBe(PTZ.DOWN);
+    expect(ptzForScreen('up', 90).move).toBe(PTZ.LEFT);
+    // upside down: everything inverted
+    expect(ptzForScreen('right', 180).move).toBe(PTZ.LEFT);
+    expect(ptzForScreen('up', 180).move).toBe(PTZ.DOWN);
+    // 270° = 90° the other way
+    expect(ptzForScreen('right', 270).move).toBe(PTZ.DOWN);
+    expect(ptzForScreen('up', 270)).toEqual({move: PTZ.RIGHT, stop: PTZ.RIGHT_STOP});
   });
 
   test('rotmir: bit 0 mirror, bit 1 flip', () => {

@@ -17,6 +17,8 @@ import {
   IrMode,
   LightMode,
   PTZ,
+  ptzForScreen,
+  ScreenDir,
   rotmirParse,
   rotmirValue,
 } from '../camera/commands';
@@ -324,22 +326,29 @@ export default function LiveScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [online]);
 
-  /** Tap = one step; hold = keep moving until release (same as the vendor app). */
-  const ptzHandlers = (dir: number, stop: number) => ({
-    onPress: () => send(CamCommands.ptzStep(auth, dir)),
-    onLongPress: () => {
-      holding.current = true;
-      send(CamCommands.ptz(auth, dir));
-    },
-    onPressOut: () => {
-      if (holding.current) {
-        holding.current = false;
-        send(CamCommands.ptz(auth, stop));
-      }
-    },
-    delayLongPress: 300,
-    disabled: !online,
-  });
+  /**
+   * Tap = one step; hold = keep moving until release (same as the vendor app).
+   * The arrow is the direction ON SCREEN: it is translated to the camera's direction
+   * according to the picture rotation (⟳), so "right" always moves the picture right.
+   */
+  const ptzHandlers = (screenDir: ScreenDir) => {
+    const {move, stop} = ptzForScreen(screenDir, rotation);
+    return {
+      onPress: () => send(CamCommands.ptzStep(auth, move)),
+      onLongPress: () => {
+        holding.current = true;
+        send(CamCommands.ptz(auth, move));
+      },
+      onPressOut: () => {
+        if (holding.current) {
+          holding.current = false;
+          send(CamCommands.ptz(auth, stop));
+        }
+      },
+      delayLongPress: 300,
+      disabled: !online,
+    };
+  };
 
   const changeIr = (m: IrMode) => {
     setIr(m);
@@ -473,12 +482,12 @@ export default function LiveScreen({
         {/* pan / tilt */}
         <View style={styles.pad}>
           <View style={styles.padRow}>
-            <Pressable style={styles.padBtn} {...ptzHandlers(PTZ.UP, PTZ.UP_STOP)}>
+            <Pressable style={styles.padBtn} {...ptzHandlers('up')}>
               <Text style={styles.padIcon}>▲</Text>
             </Pressable>
           </View>
           <View style={styles.padRow}>
-            <Pressable style={styles.padBtn} {...ptzHandlers(PTZ.LEFT, PTZ.LEFT_STOP)}>
+            <Pressable style={styles.padBtn} {...ptzHandlers('left')}>
               <Text style={styles.padIcon}>◀</Text>
             </Pressable>
             <Pressable
@@ -487,12 +496,12 @@ export default function LiveScreen({
               onPress={() => send(CamCommands.ptzStep(auth, PTZ.CENTER))}>
               <Text style={[styles.padIcon, {fontSize: 12}]}>Centro</Text>
             </Pressable>
-            <Pressable style={styles.padBtn} {...ptzHandlers(PTZ.RIGHT, PTZ.RIGHT_STOP)}>
+            <Pressable style={styles.padBtn} {...ptzHandlers('right')}>
               <Text style={styles.padIcon}>▶</Text>
             </Pressable>
           </View>
           <View style={styles.padRow}>
-            <Pressable style={styles.padBtn} {...ptzHandlers(PTZ.DOWN, PTZ.DOWN_STOP)}>
+            <Pressable style={styles.padBtn} {...ptzHandlers('down')}>
               <Text style={styles.padIcon}>▼</Text>
             </Pressable>
           </View>

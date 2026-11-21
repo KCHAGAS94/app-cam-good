@@ -26,6 +26,28 @@ export const PTZ = {
   CENTER: 132,
 } as const;
 
+export type ScreenDir = 'up' | 'right' | 'down' | 'left';
+
+/** Camera directions in clockwise order, with the value that stops each one. */
+const CLOCKWISE = [
+  {move: PTZ.UP, stop: PTZ.UP_STOP},
+  {move: PTZ.RIGHT, stop: PTZ.RIGHT_STOP},
+  {move: PTZ.DOWN, stop: PTZ.DOWN_STOP},
+  {move: PTZ.LEFT, stop: PTZ.LEFT_STOP},
+];
+const SCREEN_ORDER: ScreenDir[] = ['up', 'right', 'down', 'left'];
+
+/**
+ * Arrow pressed on the screen -> camera pan/tilt values, taking into account the picture
+ * rotation done in the app (⟳). With the picture turned 90° clockwise the camera's "up"
+ * shows as "right" on screen, so the right arrow must send "up".
+ */
+export function ptzForScreen(dir: ScreenDir, rotation: number) {
+  const steps = (((Math.round(rotation / 90) % 4) + 4) % 4);
+  const screenIndex = SCREEN_ORDER.indexOf(dir);
+  return CLOCKWISE[(screenIndex - steps + 4) % 4];
+}
+
 /** Infrared night vision (field "icut"). */
 export const IR = {OFF: 0, ON: 1, AUTO: 2} as const;
 export type IrMode = (typeof IR)[keyof typeof IR];
