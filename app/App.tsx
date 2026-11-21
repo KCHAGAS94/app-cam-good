@@ -8,7 +8,7 @@ import AccountScreen from './src/screens/AccountScreen';
 import GalleryScreen from './src/screens/GalleryScreen';
 import PickCameraScreen from './src/screens/PickCameraScreen';
 import MultiViewScreen from './src/screens/MultiViewScreen';
-import {SavedCamera} from './src/storage';
+import {getFavorite, loadCameras, SavedCamera} from './src/storage';
 import HomeScreen from './src/screens/HomeScreen';
 import SetupScreen from './src/screens/SetupScreen';
 import LiveScreen from './src/screens/LiveScreen';
@@ -22,7 +22,7 @@ type Route =
   | {name: 'home'}
   | {name: 'setup'}
   /** fromMulti = opened from the 4-camera grid: back returns to it */
-  | {name: 'live'; camera: SavedCamera; fromMulti?: boolean}
+  | {name: 'live'; camera: SavedCamera; fromMulti?: boolean; fullscreen?: boolean}
   | {name: 'multi'}
   | {name: 'wifi'; camera: SavedCamera}
   | {name: 'sd'; camera: SavedCamera}
@@ -44,7 +44,15 @@ export default function App() {
 
   useEffect(() => {
     CameraModule.init()
-      .then(() => setReady(true))
+      .then(async () => {
+        // favorite camera: the app starts straight on it, full screen
+        const fav = await getFavorite();
+        const camera = fav ? (await loadCameras()).find(c => c.did === fav) : undefined;
+        if (camera) {
+          setRoute({name: 'live', camera, fullscreen: true});
+        }
+        setReady(true);
+      })
       .catch(e => setError(String(e?.message ?? e)));
   }, []);
 
@@ -162,6 +170,7 @@ export default function App() {
         ) : (
           <LiveScreen
             camera={route.camera}
+            startFullscreen={route.fullscreen}
             onBack={() => setRoute(route.fromMulti ? {name: 'multi'} : {name: 'home'})}
             onOpenWifi={() => setRoute({name: 'wifi', camera: route.camera})}
             onOpenSd={() => setRoute({name: 'sd', camera: route.camera})}

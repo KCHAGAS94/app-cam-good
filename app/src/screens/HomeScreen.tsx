@@ -4,7 +4,7 @@ import {CloudStatus, useCloudStatus} from '../camera/useCloudStatus';
 import {MenuButton, MenuItem, SideMenu} from '../components/SideMenu';
 import {getAccount, logout, syncCameras} from '../server/account';
 import {processUploads} from '../server/uploads';
-import {loadCameras, removeCamera, SavedCamera} from '../storage';
+import {getFavorite, loadCameras, removeCamera, SavedCamera, setFavorite} from '../storage';
 import {colors, ui} from '../theme';
 import {useAppActive} from '../useAppActive';
 
@@ -43,11 +43,21 @@ export default function HomeScreen({
   const account = getAccount();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [favorite, setFavoriteState] = useState<string | null>(null);
+
   const reload = useCallback(() => {
     loadCameras().then(setCameras);
+    getFavorite().then(setFavoriteState);
   }, []);
 
   useEffect(reload, [reload]);
+
+  /** Only one favorite: it opens full screen when the app starts. Tap again to unmark. */
+  const toggleFavorite = (cam: SavedCamera) => {
+    const next = favorite === cam.did ? null : cam.did;
+    setFavoriteState(next);
+    setFavorite(next);
+  };
 
   /** Pull to refresh: camera status + (with an account) the camera list from the server. */
   const onRefresh = async () => {
@@ -70,7 +80,17 @@ export default function HomeScreen({
     }
     Alert.alert('Remover câmera', `Remover "${cam.name}" da lista?`, [
       {text: 'Cancelar', style: 'cancel'},
-      {text: 'Remover', style: 'destructive', onPress: () => removeCamera(cam.did).then(setCameras)},
+      {
+        text: 'Remover',
+        style: 'destructive',
+        onPress: () => {
+          if (favorite === cam.did) {
+            setFavoriteState(null);
+            setFavorite(null);
+          }
+          removeCamera(cam.did).then(setCameras);
+        },
+      },
     ]);
   };
 
@@ -145,6 +165,14 @@ export default function HomeScreen({
               onPress={() => onOpen(item)}
               onLongPress={() => confirmRemove(item)}>
               <View style={styles.row}>
+                <Pressable
+                  onPress={() => toggleFavorite(item)}
+                  hitSlop={12}
+                  accessibilityLabel={favorite === item.did ? 'Desmarcar favorita' : 'Marcar como favorita'}>
+                  <Text style={[styles.star, favorite === item.did && styles.starOn]}>
+                    {favorite === item.did ? '★' : '☆'}
+                  </Text>
+                </Pressable>
                 <Text style={[ui.text, {fontWeight: '600', fontSize: 17, flex: 1}]}>{item.name}</Text>
                 <View style={[styles.dot, {backgroundColor: st.color}]} />
                 <Text style={[ui.muted, {color: st.color}]}>{st.label}</Text>
@@ -153,14 +181,16 @@ export default function HomeScreen({
                 {item.did}
                 {item.serverId !== undefined ? '  · conta' : ''}
               </Text>
-              <Text style={[ui.muted, {marginTop: 8, color: colors.primary}]}>Toque para ver ao vivo</Text>
+              <Text style={[ui.muted, {marginTop: 8, color: colors.primary}]}>
+                {favorite === item.did ? 'Favorita · abre em tela cheia ao iniciar o app' : 'Toque para ver ao vivo'}
+              </Text>
             </Pressable>
           );
         }}
       />
       {cameras.length > 0 && (
         <Text style={[ui.muted, {textAlign: 'center', paddingBottom: 12}]}>
-          Puxe para atualizar · segure uma câmera para removê-la
+          ☆ favorita · puxe para atualizar · segure para remover
         </Text>
       )}
     </View>
@@ -170,4 +200,6 @@ export default function HomeScreen({
 const styles = StyleSheet.create({
   row: {flexDirection: 'row', alignItems: 'center', gap: 6},
   dot: {width: 8, height: 8, borderRadius: 4},
+  star: {fontSize: 24, color: colors.muted, marginRight: 4},
+  starOn: {color: '#f2c94c'},
 });

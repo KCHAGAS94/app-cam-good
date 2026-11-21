@@ -15,6 +15,25 @@ export type SavedCamera = {
   serverId?: number;
 };
 
+const FAVORITE_KEY = 'favorite.v1';
+
+/** The camera that opens full screen when the app starts (only one). */
+export async function getFavorite(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(FAVORITE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function setFavorite(did: string | null): Promise<void> {
+  if (did) {
+    await AsyncStorage.setItem(FAVORITE_KEY, did);
+  } else {
+    await AsyncStorage.removeItem(FAVORITE_KEY);
+  }
+}
+
 /** Replaces the whole list (used by the server sync). */
 export async function saveAllCameras(list: SavedCamera[]): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(list));

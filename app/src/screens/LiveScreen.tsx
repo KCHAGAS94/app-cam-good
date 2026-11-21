@@ -41,6 +41,8 @@ type Props = {
   onOpenRecordings: () => void;
   onOpenSettings: () => void;
   onOpenGallery: () => void;
+  /** Open already in full screen (favorite camera at app start). */
+  startFullscreen?: boolean;
 };
 
 /** Explains a failed connection using what the P2P server knows about the camera. */
@@ -118,6 +120,7 @@ export default function LiveScreen({
   onOpenRecordings,
   onOpenSettings,
   onOpenGallery,
+  startFullscreen = false,
 }: Props) {
   const {did} = camera;
   const auth = {user: camera.user, pwd: camera.pwd};
@@ -148,7 +151,7 @@ export default function LiveScreen({
   // full screen: automatically in landscape, or with the button
   const {width: winW, height: winH} = useWindowDimensions();
   const landscape = winW > winH;
-  const [fullscreenBtn, setFullscreenBtn] = useState(false);
+  const [fullscreenBtn, setFullscreenBtn] = useState(startFullscreen);
   const fullscreen = landscape || fullscreenBtn;
 
   // Android back button leaves full screen first
