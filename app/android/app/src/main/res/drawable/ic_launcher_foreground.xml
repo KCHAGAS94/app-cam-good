@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CamGood launcher icon: a camera lens (adaptive icon foreground, 108dp canvas, art inside the 66dp safe zone). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- camera body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,40 L44,40 L48,34 L60,34 L64,40 L78,40 A4,4 0 0 1 82,44 L82,72 A4,4 0 0 1 78,76 L30,76 A4,4 0 0 1 26,72 L26,44 A4,4 0 0 1 30,40 Z" />
+    <!-- lens ring -->
+    <path
+        android:fillColor="#1A7F74"
+        android:pathData="M54,44 A14,14 0 1 1 53.99,44 Z" />
+    <!-- lens glass -->
+    <path
+        android:fillColor="#0F1417"
+        android:pathData="M54,49 A9,9 0 1 1 53.99,49 Z" />
+    <!-- reflection -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51,53 A2.5,2.5 0 1 1 50.99,53 Z" />
+    <!-- recording dot -->
+    <path
+        android:fillColor="#E5534B"
+        android:pathData="M74,46 A2.5,2.5 0 1 1 73.99,46 Z" />
+</vector>
