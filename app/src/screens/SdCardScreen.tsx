@@ -107,7 +107,9 @@ export default function SdCardScreen({camera, onBack}: Props) {
     send(CamCommands.setRecordParams(auth, next));
   };
 
-  const inserted = sd !== null && sd.total > 0;
+  // no card: total 0 (vendor rule) — this camera also answers total 100 / sdstatu 0 without a card,
+  // so sdstatu 0 is treated as "no card" (observed on the device)
+  const inserted = sd !== null && sd.total > 0 && Number(sd.raw.sdstatu ?? 1) !== 0;
   const usedPct = inserted ? Math.round(((sd!.total - sd!.free) * 100) / sd!.total) : 0;
 
   return (

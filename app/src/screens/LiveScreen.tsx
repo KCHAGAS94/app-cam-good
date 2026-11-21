@@ -37,7 +37,6 @@ type Props = {
   camera: SavedCamera;
   onBack: () => void;
   onOpenWifi: () => void;
-  onOpenSd: () => void;
   onOpenRecordings: () => void;
   onOpenSettings: () => void;
   onOpenGallery: () => void;
@@ -116,7 +115,6 @@ export default function LiveScreen({
   camera,
   onBack,
   onOpenWifi,
-  onOpenSd,
   onOpenRecordings,
   onOpenSettings,
   onOpenGallery,
@@ -605,10 +603,6 @@ export default function LiveScreen({
           </Pressable>
         )}
 
-        <Pressable style={ui.button} onPress={onOpenRecordings}>
-          <Text style={ui.buttonText}>🎞 Galeria (gravações do cartão, hora a hora)</Text>
-        </Pressable>
-
         {camera.serverId !== undefined && getAccount() && (
           <Pressable style={ui.buttonGhost} onPress={onOpenGallery}>
             <Text style={ui.text}>🖼 Fotos desta câmera (servidor)</Text>
@@ -675,8 +669,8 @@ export default function LiveScreen({
         </View>
 
         <View style={{flexDirection: 'row', gap: 10}}>
-          <Pressable style={[ui.buttonGhost, {flex: 1}]} onPress={onOpenSd}>
-            <Text style={ui.text}>Cartão de memória</Text>
+          <Pressable style={[ui.buttonGhost, {flex: 1}]} onPress={onOpenRecordings}>
+            <Text style={ui.text}>🎞 Galeria</Text>
           </Pressable>
           <Pressable style={[ui.buttonGhost, {flex: 1}]} disabled={!online} onPress={toggleLed}>
             <Text style={ui.text}>LED indicador: {led === null ? '—' : led ? 'ligado' : 'desligado'}</Text>

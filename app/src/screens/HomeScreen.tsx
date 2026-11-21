@@ -94,14 +94,14 @@ export default function HomeScreen({
     ]);
   };
 
+  // "Conta" is reached through ENTRAR (footer) or by tapping the user name at the top of the menu
   const menuItems: MenuItem[] = [
-    ...(cameras.length > 1 ? [{key: 'multi', icon: '🔲', label: 'Mosaico', onPress: onOpenMulti}] : []),
+    {key: 'add', icon: '➕', label: 'Adicionar câmera', onPress: onAdd},
     ...(cameras.length > 0
       ? [{key: 'gallery', icon: '🎞️', label: 'Galeria', onPress: () => onOpenRecordings(cameras)}]
       : []),
+    ...(cameras.length > 1 ? [{key: 'multi', icon: '🔲', label: 'Mosaico', onPress: onOpenMulti}] : []),
     ...(account ? [{key: 'photos', icon: '🖼️', label: 'Fotos', onPress: onOpenPhotos}] : []),
-    {key: 'account', icon: '👤', label: 'Conta', onPress: onOpenAccount},
-    {key: 'add', icon: '➕', label: 'Adicionar câmera', onPress: onAdd},
   ];
 
   const confirmLogout = () =>
@@ -128,6 +128,7 @@ export default function HomeScreen({
         subtitle={account ? (account.user.role === 'admin' ? 'Administrador' : 'Usuário') + ' · ' + account.user.email : 'Câmeras salvas só neste celular'}
         items={menuItems}
         footer={footer}
+        onHeaderPress={account ? onOpenAccount : undefined}
       />
 
       <FlatList

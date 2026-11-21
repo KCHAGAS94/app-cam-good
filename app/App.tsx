@@ -25,7 +25,8 @@ type Route =
   | {name: 'live'; camera: SavedCamera; fromMulti?: boolean; fullscreen?: boolean}
   | {name: 'multi'}
   | {name: 'wifi'; camera: SavedCamera}
-  | {name: 'sd'; camera: SavedCamera}
+  /** memory-card space/format, opened from the gallery; back returns to it */
+  | {name: 'sd'; camera: SavedCamera; fromHome?: boolean}
   /** memory-card gallery (hour by hour); fromHome = opened from the menu, back goes home */
   | {name: 'recordings'; camera: SavedCamera; fromHome?: boolean}
   | {name: 'pickCamera'}
@@ -104,7 +105,11 @@ export default function App() {
         setRoute({name: 'multi'});
         return true;
       }
-      if (route.name === 'wifi' || route.name === 'sd' || route.name === 'settings') {
+      if (route.name === 'sd') {
+        setRoute({name: 'recordings', camera: route.camera, fromHome: route.fromHome});
+        return true;
+      }
+      if (route.name === 'wifi' || route.name === 'settings') {
         setRoute({name: 'live', camera: route.camera});
         return true;
       }
@@ -179,11 +184,12 @@ export default function App() {
           <RecordingsScreen
             camera={route.camera}
             onBack={() => setRoute(route.fromHome ? {name: 'home'} : {name: 'live', camera: route.camera})}
+            onOpenSd={() => setRoute({name: 'sd', camera: route.camera, fromHome: route.fromHome})}
           />
         ) : route.name === 'sd' ? (
           <SdCardScreen
             camera={route.camera}
-            onBack={() => setRoute({name: 'live', camera: route.camera})}
+            onBack={() => setRoute({name: 'recordings', camera: route.camera, fromHome: route.fromHome})}
           />
         ) : (
           <LiveScreen
@@ -191,7 +197,6 @@ export default function App() {
             startFullscreen={route.fullscreen}
             onBack={() => setRoute(route.fromMulti ? {name: 'multi'} : {name: 'home'})}
             onOpenWifi={() => setRoute({name: 'wifi', camera: route.camera})}
-            onOpenSd={() => setRoute({name: 'sd', camera: route.camera})}
             onOpenRecordings={() => setRoute({name: 'recordings', camera: route.camera})}
             onOpenSettings={() => openSettings(route.camera)}
             onOpenGallery={() => setRoute({name: 'gallery', from: route.camera})}

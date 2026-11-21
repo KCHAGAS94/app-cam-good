@@ -36,7 +36,7 @@ import {logAction} from '../server/account';
 import {loadCameras, SavedCamera} from '../storage';
 import {colors, ui} from '../theme';
 
-type Props = {camera: SavedCamera; onBack: () => void};
+type Props = {camera: SavedCamera; onBack: () => void; onOpenSd: () => void};
 type Step = 'days' | 'day' | 'player';
 
 const REPLY_TIMEOUT_MS = 12_000;
@@ -47,7 +47,7 @@ const SPEEDS = [1, 2, 4] as const;
  * Memory-card gallery, hour by hour: pick a day, see each recorded hour as a card,
  * watch the whole hour (files play in sequence, 1x/2x/4x) or delete it.
  */
-export default function RecordingsScreen({camera, onBack}: Props) {
+export default function RecordingsScreen({camera, onBack, onOpenSd}: Props) {
   const {did} = camera;
   const auth = {user: camera.user, pwd: camera.pwd};
   const {status, online} = useCameraSession(camera);
@@ -463,7 +463,7 @@ export default function RecordingsScreen({camera, onBack}: Props) {
               {days === null ? (
                 <LoadingCard text="Consultando o cartão…" />
               ) : days.length === 0 ? (
-                <EmptyCard text={`Nenhuma gravação em ${year}. Confira se há um cartão na câmera (tela “Cartão de memória”).`} />
+                <EmptyCard text={`Nenhuma gravação em ${year}. As gravações aparecem aqui quando houver um cartão de memória na câmera.`} />
               ) : (
                 days.map(d => (
                   <Pressable key={d.key} style={ui.card} onPress={() => openDay(d)}>
@@ -471,6 +471,9 @@ export default function RecordingsScreen({camera, onBack}: Props) {
                   </Pressable>
                 ))
               )}
+              <Pressable style={ui.buttonGhost} onPress={onOpenSd}>
+                <Text style={ui.text}>💾 Cartão de memória (espaço e formatar)</Text>
+              </Pressable>
             </>
           )}
 

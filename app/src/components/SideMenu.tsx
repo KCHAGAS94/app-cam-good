@@ -14,6 +14,8 @@ type Props = {
   items: MenuItem[];
   /** Pinned at the bottom (e.g. SAIR / ENTRAR). */
   footer?: MenuItem;
+  /** Tapping the user block (name) — e.g. open the account screen when logged in. */
+  onHeaderPress?: () => void;
 };
 
 const DURATION = 220;
@@ -23,7 +25,7 @@ const DURATION = 220;
  * brand + ✕ on top, user block, menu items, and a footer item pinned to the bottom.
  * Closes on tap outside, on ✕, or with the Android back button.
  */
-export function SideMenu({visible, onClose, title, subtitle, items, footer}: Props) {
+export function SideMenu({visible, onClose, title, subtitle, items, footer, onHeaderPress}: Props) {
   const {width} = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const panelWidth = Math.min(320, width * 0.82);
@@ -70,16 +72,20 @@ export function SideMenu({visible, onClose, title, subtitle, items, footer}: Pro
         </View>
 
         {/* user */}
-        <View style={styles.user}>
+        <Pressable
+          style={styles.user}
+          disabled={!onHeaderPress}
+          onPress={() => onHeaderPress && choose({key: 'header', icon: '', label: '', onPress: onHeaderPress})}>
           <Text style={styles.name} numberOfLines={1}>
             {title}
+            {onHeaderPress ? '  ›' : ''}
           </Text>
           {subtitle ? (
             <Text style={styles.sub} numberOfLines={1}>
               {subtitle}
             </Text>
           ) : null}
-        </View>
+        </Pressable>
 
         <View style={styles.items}>
           {items.map(item => (
