@@ -177,10 +177,7 @@ export default function HomeScreen({
                 <View style={[styles.dot, {backgroundColor: st.color}]} />
                 <Text style={[ui.muted, {color: st.color}]}>{st.label}</Text>
               </View>
-              <Text style={[ui.muted, {marginTop: 4}]}>
-                {item.did}
-                {item.serverId !== undefined ? '  · conta' : ''}
-              </Text>
+              {item.serverId !== undefined && <Text style={[ui.muted, {marginTop: 4}]}>Câmera da conta</Text>}
               <Text style={[ui.muted, {marginTop: 8, color: colors.primary}]}>
                 {favorite === item.did ? 'Favorita · abre em tela cheia ao iniciar o app' : 'Toque para ver ao vivo'}
               </Text>

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, BackHandler, StatusBar, Text, View} from 'react-native';
+import {ActivityIndicator, Alert, BackHandler, StatusBar, Text, View} from 'react-native';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import {CameraModule, onNetworkChange} from './src/camera/native';
 import {loadAccount, syncCameras} from './src/server/account';
@@ -68,6 +68,24 @@ export default function App() {
     const sub = onNetworkChange(e => e.type !== 'none' && processUploads());
     return () => sub.remove();
   }, []);
+
+  /** Camera settings (password, name) are protected by the phone's fingerprint / PIN. */
+  const openSettings = async (camera: SavedCamera) => {
+    const result = await CameraModule.authenticate('Configurações da câmera', 'Confirme que é você')
+      .catch(() => 'failed' as const);
+    if (result === 'ok') {
+      setRoute({name: 'settings', camera});
+    } else if (result === 'no-lock') {
+      Alert.alert(
+        'Celular sem bloqueio',
+        'Seu celular não tem digital nem senha de tela configurada, então não dá para confirmar que é você. Para proteger as configurações, configure um bloqueio de tela no Android.',
+        [{text: 'Continuar', onPress: () => setRoute({name: 'settings', camera})}],
+      );
+    } else if (result === 'failed') {
+      Alert.alert('Não confirmado', 'Não foi possível confirmar sua identidade.');
+    }
+    // 'cancel': user closed the prompt, stay on the live view
+  };
 
   // Android back button: Wi-Fi settings -> live view -> camera list
   useEffect(() => {
@@ -175,7 +193,7 @@ export default function App() {
             onOpenWifi={() => setRoute({name: 'wifi', camera: route.camera})}
             onOpenSd={() => setRoute({name: 'sd', camera: route.camera})}
             onOpenRecordings={() => setRoute({name: 'recordings', camera: route.camera})}
-            onOpenSettings={() => setRoute({name: 'settings', camera: route.camera})}
+            onOpenSettings={() => openSettings(route.camera)}
             onOpenGallery={() => setRoute({name: 'gallery', from: route.camera})}
           />
         )}

@@ -2,6 +2,12 @@ package com.camgood.camera
 
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.os.Build
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import java.security.SecureRandom
 import android.graphics.BitmapFactory
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -441,6 +447,77 @@ class CameraModule(private val ctx: ReactApplicationContext) :
         promise.reject("GALLERY", t.message, t)
       }
     }
+  }
+
+  /**
+   * Asks for the phone's fingerprint / face / PIN-pattern-password (system prompt).
+   * Resolves "ok", "cancel", "failed" or "no-lock" (phone has no screen lock to check).
+   */
+  @ReactMethod
+  fun authenticate(title: String, subtitle: String, promise: Promise) {
+    val activity = ctx.currentActivity as? FragmentActivity
+      ?: return promise.resolve("ok") // no UI to show the prompt on: don't lock the user out
+    // device credential together with biometrics is only allowed with STRONG from Android 11
+    val authenticators = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    } else {
+      BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    }
+    when (BiometricManager.from(activity).canAuthenticate(authenticators)) {
+      BiometricManager.BIOMETRIC_SUCCESS -> {}
+      BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> return promise.resolve("no-lock")
+      else -> return promise.resolve("no-lock")
+    }
+    activity.runOnUiThread {
+      var settled = false
+      val prompt = BiometricPrompt(
+        activity,
+        ContextCompat.getMainExecutor(activity),
+        object : BiometricPrompt.AuthenticationCallback() {
+          override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+            if (!settled) { settled = true; promise.resolve("ok") }
+          }
+          override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+            if (!settled) {
+              settled = true
+              promise.resolve(
+                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                  errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
+                  errorCode == BiometricPrompt.ERROR_CANCELED) "cancel" else "failed",
+              )
+            }
+          }
+          // onAuthenticationFailed = one wrong finger; the prompt stays open, nothing to do
+        },
+      )
+      val info = BiometricPrompt.PromptInfo.Builder()
+        .setTitle(title)
+        .setSubtitle(subtitle)
+        .setAllowedAuthenticators(authenticators)
+        .build()
+      prompt.authenticate(info)
+    }
+  }
+
+  /** Random camera password from a cryptographically secure generator (SecureRandom). */
+  @ReactMethod
+  fun randomPassword(length: Double, promise: Promise) {
+    // same characters accepted by validateCameraPassword (avoid JSON/URL trouble)
+    val letters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz"
+    val digits = "23456789"
+    val symbols = "._@#*!-"
+    val all = letters + digits + symbols
+    val rnd = SecureRandom()
+    val n = length.toInt().coerceIn(8, 31)
+    // guarantee at least one letter, one digit and one symbol, then shuffle
+    val chars = mutableListOf(
+      letters[rnd.nextInt(letters.length)],
+      digits[rnd.nextInt(digits.length)],
+      symbols[rnd.nextInt(symbols.length)],
+    )
+    while (chars.size < n) chars.add(all[rnd.nextInt(all.length)])
+    chars.shuffle(rnd)
+    promise.resolve(chars.joinToString(""))
   }
 
   /** "landscape" (sensor landscape, used by the 4-camera grid), "portrait" or "auto". */

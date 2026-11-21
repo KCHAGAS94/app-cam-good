@@ -222,6 +222,48 @@ export default function LiveScreen({
     }
   };
 
+  // ---- record to the phone gallery (full-screen button, e.g. intercom calls) ----
+  const [recStartedAt, setRecStartedAt] = useState<number | null>(null);
+  const [recElapsed, setRecElapsed] = useState(0);
+  const recording = recStartedAt !== null;
+
+  useEffect(() => {
+    if (!recording) {
+      return;
+    }
+    const t = setInterval(() => setRecElapsed(Date.now() - (recStartedAt ?? Date.now())), 500);
+    return () => clearInterval(t);
+  }, [recording, recStartedAt]);
+
+  // leaving the screen while recording: finish and keep the video in the gallery
+  useEffect(
+    () => () => {
+      CameraModule.stopRecording(did, true).catch(() => {});
+    },
+    [did],
+  );
+
+  const toggleRecording = async () => {
+    if (!recording) {
+      await CameraModule.startRecording(did);
+      setRecElapsed(0);
+      setRecStartedAt(Date.now());
+      return;
+    }
+    setRecStartedAt(null);
+    try {
+      const res = await CameraModule.stopRecording(did, true);
+      showToast(res ? 'Vídeo salvo na galeria (Movies/CamGood)' : 'Nada foi gravado (sem imagem)');
+    } catch (e: any) {
+      showToast(e?.message ?? 'Não foi possível salvar o vídeo');
+    }
+  };
+
+  const mmss = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  };
+
   const send = (json: string) => CameraModule.send(did, json);
 
   // ---- audio: listen (camera mic) and push-to-talk (camera speaker) ----
@@ -416,9 +458,46 @@ export default function LiveScreen({
             <Text style={ui.text}>✕ Sair da tela cheia</Text>
           </Pressable>
         )}
-        <View style={styles.videoButtons}>
-          <Pressable style={styles.videoBtn} onPress={rotate} hitSlop={8} accessibilityLabel="Girar imagem">
-            <Text style={styles.videoBtnIcon}>⟳</Text>
+        {recording && (
+          <View style={styles.recBadge}>
+            <View style={styles.recDot} />
+            <Text style={styles.recText}>REC {mmss(recElapsed)}</Text>
+          </View>
+        )}
+        {toast && <Text style={styles.fullToast}>{toast}</Text>}
+
+        {/* full-screen controls: photo · sound · talk · record · rotate */}
+        <View style={styles.fullBar}>
+          <Pressable
+            style={[styles.fullBtn, !video && styles.dim]}
+            disabled={!video}
+            onPress={takePhoto}
+            accessibilityLabel="Tirar foto">
+            <Text style={styles.fullIcon}>📷</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.fullBtn, listening && styles.fullBtnOn, !online && styles.dim]}
+            disabled={!online}
+            onPress={toggleSound}
+            accessibilityLabel={listening ? 'Desligar som' : 'Ligar som'}>
+            <Text style={styles.fullIcon}>{listening ? '🔊' : '🔇'}</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.fullBtn, talking && styles.fullBtnTalk, !online && !talking && styles.dim]}
+            disabled={!online && !talking}
+            onPress={toggleTalk}
+            accessibilityLabel={talking ? 'Parar de falar' : 'Falar pela câmera'}>
+            <Text style={styles.fullIcon}>🎤</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.fullBtn, recording && styles.fullBtnRec, !video && !recording && styles.dim]}
+            disabled={!video && !recording}
+            onPress={toggleRecording}
+            accessibilityLabel={recording ? 'Parar gravação' : 'Gravar no celular'}>
+            <Text style={styles.fullIcon}>{recording ? '⏹' : '⏺'}</Text>
+          </Pressable>
+          <Pressable style={styles.fullBtn} onPress={rotate} accessibilityLabel="Girar imagem">
+            <Text style={styles.fullIcon}>⟳</Text>
           </Pressable>
         </View>
       </View>
@@ -646,6 +725,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  fullBar: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  fullBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullBtnOn: {borderColor: colors.primary, backgroundColor: 'rgba(43,179,163,0.35)'},
+  fullBtnTalk: {borderColor: colors.danger, backgroundColor: 'rgba(229,83,75,0.45)'},
+  fullBtnRec: {borderColor: colors.danger, backgroundColor: 'rgba(229,83,75,0.6)'},
+  fullIcon: {fontSize: 22, color: '#fff'},
+  recBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  recDot: {width: 10, height: 10, borderRadius: 5, backgroundColor: colors.danger},
+  recText: {color: '#fff', fontWeight: '700'},
+  fullToast: {
+    position: 'absolute',
+    bottom: 92,
+    alignSelf: 'center',
+    color: '#fff',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   photoBtn: {width: 56, paddingHorizontal: 0},
   photoIcon: {fontSize: 20},

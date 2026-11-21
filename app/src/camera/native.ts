@@ -12,6 +12,10 @@ type CameraModuleType = {
   getConnectionType(): Promise<NetType>;
   /** Seconds since the camera checked in with the P2P server (0..60 = online). */
   checkOnline(did: string): Promise<number>;
+  /** Phone fingerprint / face / PIN prompt. "no-lock" = the phone has no screen lock set up. */
+  authenticate(title: string, subtitle: string): Promise<'ok' | 'cancel' | 'failed' | 'no-lock'>;
+  /** Strong random camera password (SecureRandom), 8-31 chars. */
+  randomPassword(length: number): Promise<string>;
   /** Locks the screen: "landscape" (4-camera grid), "portrait" or back to "auto". */
   setOrientation(mode: 'landscape' | 'portrait' | 'auto'): void;
   /** Opens playback of a memory-card file; frames go to <CameraView did={`${did}#pb`}>. */

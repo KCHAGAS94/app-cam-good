@@ -21,6 +21,16 @@ export default function CameraSettingsScreen({camera, onBack, onSaved}: Props) {
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
   const [showPwd, setShowPwd] = useState(false);
+  const [generated, setGenerated] = useState(false);
+
+  /** Strong random password (12 chars, SecureRandom), filled in both fields and shown. */
+  const generatePassword = async () => {
+    const pwd = await CameraModule.randomPassword(12);
+    setNewPwd(pwd);
+    setConfirmPwd(pwd);
+    setShowPwd(true);
+    setGenerated(true);
+  };
   const [savedPwd, setSavedPwd] = useState(camera.pwd);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -165,9 +175,19 @@ export default function CameraSettingsScreen({camera, onBack, onSaved}: Props) {
                 secureTextEntry={!showPwd}
               />
               {mismatch && <Text style={[ui.muted, {color: colors.danger}]}>As senhas não conferem.</Text>}
-              <Pressable onPress={() => setShowPwd(v => !v)} hitSlop={8}>
-                <Text style={ui.link}>{showPwd ? 'Ocultar senhas' : 'Mostrar senhas'}</Text>
-              </Pressable>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                <Pressable onPress={() => setShowPwd(v => !v)} hitSlop={8}>
+                  <Text style={ui.link}>{showPwd ? 'Ocultar senhas' : 'Mostrar senhas'}</Text>
+                </Pressable>
+                <Pressable onPress={generatePassword} hitSlop={8}>
+                  <Text style={ui.link}>🎲 Gerar senha automática</Text>
+                </Pressable>
+              </View>
+              {generated && (
+                <Text style={[ui.muted, {color: colors.warn}]}>
+                  Senha gerada: anote antes de tocar em “Trocar senha”. Se esquecer, só resetando a câmera.
+                </Text>
+              )}
               <Pressable style={[ui.button, !canChange && {opacity: 0.5}]} disabled={!canChange} onPress={confirmChange}>
                 {busy ? <ActivityIndicator color="#fff" /> : <Text style={ui.buttonText}>Trocar senha</Text>}
               </Pressable>
